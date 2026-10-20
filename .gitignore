@@ -1,0 +1,9 @@
+# local secrets and settings
+docker/.env
+.env
+# editors / OS
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db

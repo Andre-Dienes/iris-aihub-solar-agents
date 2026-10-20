@@ -1,0 +1,25 @@
+zn "%SYS"
+do ##class(Security.Users).UnExpireUserPasswords("*")
+set sc = ##class(Security.Users).Get("_SYSTEM",.u) set u("ChangePassword")=0 do ##class(Security.Users).Modify("_SYSTEM",.u)
+do ##class(Security.Services).Get("%Service_CallIn",.s) set s("Enabled")=1 do ##class(Security.Services).Modify("%Service_CallIn",.s)
+do ##class(Security.Services).Get("%Service_Bindings",.s) set s("Enabled")=1 do ##class(Security.Services).Modify("%Service_Bindings",.s)
+if '##class(Security.SSLConfigs).Exists("SOLAR_TLS") do ##class(Security.SSLConfigs).Create("SOLAR_TLS")
+set dir = "/usr/irissys/mgr/solar/"
+if '##class(%File).DirectoryExists(dir) do ##class(%File).CreateDirectoryChain(dir)
+if '##class(SYS.Database).%ExistsId(dir) do ##class(SYS.Database).CreateDatabase(dir)
+kill p set p("Directory")=dir
+if '##class(Config.Databases).Exists("SOLAR") do ##class(Config.Databases).Create("SOLAR",.p)
+kill p set p("Globals")="SOLAR",p("Routines")="SOLAR"
+if '##class(Config.Namespaces).Exists("SOLAR") do ##class(Config.Namespaces).Create("SOLAR",.p)
+do ##class(%EnsembleMgr).EnableNamespace("SOLAR",1)
+kill a set a("NameSpace")="SOLAR",a("DispatchClass")="SolarAgents.MCP.Service",a("AutheEnabled")=96,a("MatchRoles")=":%All",a("Recurse")=1,a("Enabled")=1
+if '##class(Security.Applications).Exists("/mcp/solar") do ##class(Security.Applications).Create("/mcp/solar",.a)
+kill a set a("NameSpace")="SOLAR",a("DispatchClass")="SolarAgents.API.REST",a("AutheEnabled")=96,a("MatchRoles")=":%All",a("Enabled")=1
+if '##class(Security.Applications).Exists("/api/solar") do ##class(Security.Applications).Create("/api/solar",.a)
+zn "SOLAR"
+do $system.OBJ.LoadDir("/src","k",.err,1)
+do $system.OBJ.CompilePackage("SolarAgents","ck-d",.err)
+do $system.OBJ.Compile("SolarAgents.Tools.SolarToolSet","ck-d")
+do $system.OBJ.Compile("SolarAgents.MCP.Service","ck-d")
+do ##class(SolarAgents.Setup.Installer).Build()
+halt

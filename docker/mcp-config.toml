@@ -1,0 +1,14 @@
+[mcp]
+transport = "http"
+host      = "0.0.0.0"
+port      = 8888
+
+[[iris]]
+name                       = "solar"
+server                     = { host = "localhost", port = 1972, username = "_SYSTEM", password = "SYS" }
+pool                       = { min = 1, max = 3 }
+tool_refresh_interval_secs = 30
+request_timeout            = "300s"
+endpoints = [
+  { path = "/mcp/solar" },
+]

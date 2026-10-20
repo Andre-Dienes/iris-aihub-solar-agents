@@ -1,0 +1,4 @@
+# Keep Unix line endings: these files run inside the Linux IRIS container
+* text=auto eol=lf
+*.jpg binary
+*.png binary

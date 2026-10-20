@@ -1,0 +1,38 @@
+services:
+  iris:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        IMAGE: ${IRIS_IMAGE:-intersystems/irishealth-community:2026.3.0AI.136.0}
+    image: iris-aihub-solar-agents:latest
+    container_name: solar-agents-iris
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - SOLAR_LLM_MODEL=${SOLAR_LLM_MODEL:-gpt-4o-mini}
+      - SOLAR_LLM_MODEL_STRONG=${SOLAR_LLM_MODEL_STRONG:-gpt-4o}
+    ports:
+      - "${IRIS_PORT:-1972}:1972"
+      - "${IRIS_WEB_PORT:-52773}:52773"
+      - "${MCP_PORT:-8888}:8888"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/localhost/1972"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    stop_grace_period: 60s
+
+  # Optional MCP sidecar: docker compose --profile mcp up -d
+  mcp:
+    image: iris-aihub-solar-agents:latest
+    container_name: solar-agents-mcp
+    entrypoint: ["/usr/irissys/bin/iris-mcp-server"]
+    command: ["--config", "/etc/iris-mcp/mcp-config.toml", "run"]
+    network_mode: "service:iris"
+    volumes:
+      - ./mcp-config.toml:/etc/iris-mcp/mcp-config.toml:ro
+    depends_on:
+      iris:
+        condition: service_healthy
+    profiles: ["mcp"]
